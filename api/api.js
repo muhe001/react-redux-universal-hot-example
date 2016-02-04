@@ -1,5 +1,9 @@
 import express from 'express';
+import adapter from 'socket.io-redis';
+import redisClient from './utils/redisClient';
+import {pub, sub} from './utils/redisClient';
 import session from 'express-session';
+import connectRedis from 'connect-redis';
 import bodyParser from 'body-parser';
 import config from '../src/config';
 import * as actions from './actions/index';
@@ -14,13 +18,26 @@ const app = express();
 const server = new http.Server(app);
 
 const io = new SocketIo(server);
+
+io.adapter(adapter({
+  pubClient: pub,
+  subClient: sub
+}))
+
 io.path('/ws');
 
+
+const RedisStore = connectRedis(session);
+
 app.use(session({
-  secret: 'react and redux rule!!!!',
+  store: new RedisStore({
+    client: redisClient,
+    ttl :  60*60*24
+  }),
+  secret: 'hoo ha space cowboy!!!...*&$%)$_&@(*$&_@(@*&#^%$_+(^@$!_$(',
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 60000 }
+  cookie: { maxAge: 60*60*24*1000 }
 }));
 app.use(bodyParser.json());
 
